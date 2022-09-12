@@ -1,4 +1,12 @@
+# Gister
 
+Command line utility for generating gists. The gists are stored locally 
+in a repository which can also be version controlled. The folder is 
+`~/repos/github.com/$GHUSER/gists`. To add autocompletion to the script
+we place `complete -C gister gister`. To make it executable place gister in a path
+directory such as `~/.local/bin`. 
+
+The following commands are available.
 
 ## The `create` Command
 
