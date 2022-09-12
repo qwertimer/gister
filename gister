@@ -17,6 +17,93 @@ GITUSER="${config_info##*=}"
 
 declare -A HELP
 
+HELP[create]='Creates a new gist, the function allows the user 
+to choose from python, go and bash scripts and will autogenerate 
+the she bang and an author/project note at the top of the program.'
+
+x.create() {
+  PS3="Enter gist language: "
+
+  select ITEM in python go bash; do
+    case $ITEM in
+      python)
+        _check_dir "python"
+        _new_gist "$1" "#!/usr/bin/env python3"
+        ;;
+      go)
+        _check_dir "go" 
+        _new_gist "$1" "//$GOROOT/bin/go run $0 $@ ; exit"
+        ;;
+      bash)
+        _check_dir 'bash'
+        _new_gist "$1" "#!/usr/bin/env bash"
+        ;;
+    esac
+
+  done
+}
+
+HELP[push]='Creates a gist on github.
+  push a gist repo to a public github gist repo
+  '
+x.push() {
+  cd $GIST_DIR
+  _have fzf && file=$(find * -type f | fzf) || echo "fzf not installed"
+  filename="${file##*/}"
+  f="${filename%.*}"
+  gh gist create --public -d $f -f $GIST_DIR/$file $GIST_DIR/$file
+}
+
+HELP[private_push]='Creates a private gist on github.
+  push a gist repo to a private github gist repo
+  '
+x.private_push() {
+  cd $GIST_DIR
+  _have fzf && file=$(find * -type f | fzf) || echo "fzf not installed"
+  filename="${file##*/}"
+  f="${filename%.*}"
+  gh gist create -d $f -f $GIST_DIR/$file $GIST_DIR/$file
+  
+}
+
+
+HELP[list_local]='Lists the local gists stored on the system. 
+Optionally allows the user to open the gist in vim and edit the file.
+Once Edited the user is given the option to push to a public or 
+private gist if they wish.'
+x.list_local() {
+  cd $GIST_DIR
+  file=$(find . -type f  | fzf --preview 'bat --style=numbers --color=always --line-range :500 {}' )
+
+  read -p "Would you like to open? " yes
+  case "${yes}" in
+    y|yes|yep|yeah|ok|okay) 
+      _opener "$GIST_DIR/$file"
+      ;;
+    no|n)
+      cat "$GIST_DIR/$file"
+      exit
+      ;;
+  esac
+}
+
+
+HELP[list_public]="Lists publicly available gists on $GITUSER's account"
+x.list_public() {
+  gh gist list --public
+}
+
+HELP[list_private]="Lists privately available gists on $GITUSER's account"
+x.list_private() {
+  gh gist list --secret
+}
+
+HELP[view_gists]="view a gist from gh"
+x.view_gists() {
+  clear; gh gist view --web
+}
+
+# ---------------------------------- helpers ---------------------------------
 _gist_folder() {
   echo "MAKING DIR"
   mkdir -p "$GIST_DIR"/"$1" 
@@ -128,92 +215,6 @@ _push_priv() {
   f="${filename%.*}"
   
   gh gist create --secret -d $f -f $file $file
-}
-
-HELP[create]='Creates a new gist, the function allows the user 
-to choose from python, go and bash scripts and will autogenerate 
-the she bang and an author/project note at the top of the program.'
-
-x.create() {
-  PS3="Enter gist language: "
-
-  select ITEM in python go bash; do
-    case $ITEM in
-      python)
-        _check_dir "python"
-        _new_gist "$1" "#!/usr/bin/env python3"
-        ;;
-      go)
-        _check_dir "go" 
-        _new_gist "$1" "//$GOROOT/bin/go run $0 $@ ; exit"
-        ;;
-      bash)
-        _check_dir 'bash'
-        _new_gist "$1" "#!/usr/bin/env bash"
-        ;;
-    esac
-
-  done
-}
-
-HELP[push]='Creates a gist on github.
-  push a gist repo to a public github gist repo
-  '
-x.push() {
-  cd $GIST_DIR
-  _have fzf && file=$(find * -type f | fzf) || echo "fzf not installed"
-  filename="${file##*/}"
-  f="${filename%.*}"
-  gh gist create --public -d $f -f $GIST_DIR/$file $GIST_DIR/$file
-}
-
-HELP[private_push]='Creates a private gist on github.
-  push a gist repo to a private github gist repo
-  '
-x.private_push() {
-  cd $GIST_DIR
-  _have fzf && file=$(find * -type f | fzf) || echo "fzf not installed"
-  filename="${file##*/}"
-  f="${filename%.*}"
-  gh gist create -d $f -f $GIST_DIR/$file $GIST_DIR/$file
-  
-}
-
-
-HELP[list_local]='Lists the local gists stored on the system. 
-Optionally allows the user to open the gist in vim and edit the file.
-Once Edited the user is given the option to push to a public or 
-private gist if they wish.'
-x.list_local() {
-  cd $GIST_DIR
-  file=$(find . -type f  | fzf --preview 'bat --style=numbers --color=always --line-range :500 {}' )
-
-  read -p "Would you like to open? " yes
-  case "${yes}" in
-    y|yes|yep|yeah|ok|okay) 
-      _opener "$GIST_DIR/$file"
-      ;;
-    no|n)
-      cat "$GIST_DIR/$file"
-      exit
-      ;;
-  esac
-}
-
-
-HELP[list_public]="Lists publicly available gists on $GITUSER's account"
-x.list_public() {
-  gh gist list --public
-}
-
-HELP[list_private]="Lists privately available gists on $GITUSER's account"
-x.list_private() {
-  gh gist list --secret
-}
-
-HELP[view_gists]="view a gist from gh"
-x.view_gists() {
-  clear; gh gist view --web
 }
 
 
